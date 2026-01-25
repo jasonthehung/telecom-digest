@@ -1,0 +1,13 @@
+# 電信產業自動摘要系統 - Python 依賴
+
+# RSS 解析
+feedparser>=6.0.10
+
+# HTTP 請求
+requests>=2.31.0
+
+# Google Gemini API
+google-generativeai>=0.3.0
+
+# 環境變數管理
+python-dotenv>=1.0.0

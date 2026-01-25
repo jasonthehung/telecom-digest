@@ -1,0 +1,82 @@
+name: Daily Telecom News Digest
+
+on:
+  # 每日台北時間 08:00 執行 (UTC 00:00)
+  schedule:
+    - cron: '0 0 * * *'
+
+  # 手動觸發
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '測試模式（不發送郵件）'
+        required: false
+        default: false
+        type: boolean
+      debug:
+        description: '除錯模式'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  daily-digest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily digest
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          DEBUG_MODE: ${{ github.event.inputs.debug || 'false' }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          cd src
+
+          # 設定參數
+          ARGS="--daily"
+
+          if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
+            ARGS="$ARGS --test"
+          fi
+
+          if [ "${{ github.event.inputs.debug }}" = "true" ]; then
+            ARGS="$ARGS --debug"
+          fi
+
+          python main.py $ARGS
+
+      - name: Upload test output
+        if: ${{ github.event.inputs.test_mode == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-digest-html
+          path: src/output/*.html
+          retention-days: 7
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Daily digest completed successfully"
+          else
+            echo "❌ Daily digest failed"
+          fi
