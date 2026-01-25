@@ -70,7 +70,7 @@ BADGE_STYLES = {
 
 # Gemini API 設定
 GEMINI_MODEL = "gemini-2.0-flash"
-GEMINI_MAX_RETRIES = 3
+GEMINI_MAX_RETRIES = 1
 GEMINI_RETRY_DELAY = 5  # 秒
 
 # Email 設定
