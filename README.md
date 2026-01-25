@@ -93,6 +93,7 @@ Daily Digest | 07:00 Taipei Time | `0 23 * * *` (UTC)
 
 ### Installation Steps
 
+```bash
 # Clone the project
 git clone https://github.com/your-username/telecom-digest.git
 cd telecom-digest
@@ -108,9 +109,10 @@ pip install -r requirements.txt
 # Set environment variables
 cp .env.example .env
 # Edit .env with actual values
+```
 
 ### Local Testing
-
+```bash
 cd src
 
 # Test RSS fetching
@@ -127,9 +129,11 @@ python main.py
 
 # Debug mode
 python main.py --debug
+```
 
 ## 📁 Project Structure
 
+```bash
 telecom-digest/
 ├── .github/
 │   └── workflows/
@@ -145,6 +149,7 @@ telecom-digest/
 ├── .env.example             # Example environment variables
 ├── .gitignore               # Git ignore file
 └── README.md                 # Documentation
+```
 
 ## 📧 Email Content
 
@@ -176,15 +181,18 @@ Email sending failure | Log to GitHub Actions logs
 
 Edit the `RSS_FEEDS` list in `src/config.py`:
 
+```bash
 RSS_FEEDS: List[RSSSource] = [
     RSSSource("Your Source", "https://your-rss-url.com/feed", "en"),
     # Add more sources...
 ]
+```
 
 ### Modify Priority Keywords
 
 Edit the `PRIORITY_KEYWORDS` dictionary in `src/config.py`:
 
+```bash
 PRIORITY_KEYWORDS = {
     "highest": {
         "your_category": ["keyword1", "keyword2"],
@@ -193,13 +201,16 @@ PRIORITY_KEYWORDS = {
         # ...
     }
 }
+```
 
 ### Modify Execution Time
 
 Edit the cron expression in `.github/workflows/daily.yml`:
 
+```bash
 schedule:
   - cron: '0 23 * * *'  # Change to your desired time (UTC)
+```
 
 ## 📝 Notes
 
