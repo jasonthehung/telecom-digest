@@ -11,7 +11,7 @@ from time import mktime
 import feedparser
 import requests
 
-from config import RSS_FEEDS, RSSSource, HTTP_HEADERS, PRIORITY_KEYWORDS, CATEGORY_MAPPING
+from config import RSS_FEEDS, RSSSource, HTTP_HEADERS, PRIORITY_KEYWORDS, CATEGORY_MAPPING, TELECOM_REQUIRED_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,36 @@ class RSSFetcher:
         self.lookback_hours = lookback_hours
         self.seen_hashes: set = set()
 
+    def _parse_custom_date(self, date_str: str) -> Optional[datetime]:
+        """嘗試解析自定義日期格式"""
+        from dateutil import parser as dateutil_parser
+
+        try:
+            # dateutil 可以解析大部分日期格式，包括 "Jan 23, 2026 4:04pm"
+            dt = dateutil_parser.parse(date_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except (ValueError, TypeError):
+            pass
+
+        # 備用: 手動解析常見格式
+        custom_formats = [
+            "%b %d, %Y %I:%M%p",     # "Jan 23, 2026 4:04pm"
+            "%b %d, %Y %I:%M %p",    # "Jan 23, 2026 4:04 PM"
+            "%Y-%m-%d %H:%M:%S",     # ISO 格式
+            "%d %b %Y %H:%M:%S",     # "23 Jan 2026 12:00:00"
+        ]
+
+        for fmt in custom_formats:
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                return dt.replace(tzinfo=timezone.utc)
+            except ValueError:
+                continue
+
+        return None
+
     def _parse_published_date(self, entry: dict) -> Optional[datetime]:
         """解析發布日期"""
         # 嘗試多種日期欄位
@@ -82,8 +112,17 @@ class RSSFetcher:
                 except (TypeError, ValueError, OverflowError):
                     continue
 
-        # 如果沒有日期，假設是今天
-        return datetime.now(timezone.utc)
+        # 新增: 嘗試解析原始日期字串
+        raw_date_fields = ['published', 'updated', 'created']
+        for field_name in raw_date_fields:
+            raw_date = entry.get(field_name)
+            if raw_date:
+                parsed_dt = self._parse_custom_date(raw_date)
+                if parsed_dt:
+                    return parsed_dt
+
+        # 如果沒有日期，返回 None 而不是假設是今天
+        return None
 
     def _clean_html(self, text: str) -> str:
         """清理 HTML 標籤"""
@@ -136,6 +175,25 @@ class RSSFetcher:
 
         return max_priority, main_category
 
+    def _is_telecom_related(self, title: str, description: str) -> bool:
+        """
+        檢查新聞是否與電信相關
+
+        Args:
+            title: 新聞標題
+            description: 新聞描述
+
+        Returns:
+            bool: 是否與電信相關
+        """
+        text = f"{title} {description}".lower()
+
+        for keyword in TELECOM_REQUIRED_KEYWORDS:
+            if keyword.lower() in text:
+                return True
+
+        return False
+
     def fetch_feed(self, source: RSSSource) -> FetchResult:
         """
         抓取單一 RSS Feed
@@ -172,8 +230,13 @@ class RSSFetcher:
                     # 解析發布日期
                     published = self._parse_published_date(entry)
 
+                    # 如果無法解析日期，跳過這條新聞（比假設是今天更安全）
+                    if published is None:
+                        logger.warning(f"Skipping entry with unparsable date: {entry.get('title', 'unknown')[:50]}")
+                        continue
+
                     # 檢查是否在時間範圍內
-                    if published and published < cutoff_time:
+                    if published < cutoff_time:
                         continue
 
                     # 取得標題和描述
@@ -193,7 +256,7 @@ class RSSFetcher:
                         title=title,
                         link=link,
                         description=description[:500],  # 限制描述長度
-                        published=published or datetime.now(timezone.utc),
+                        published=published,
                         source=source.name,
                         source_language=source.language,
                     )

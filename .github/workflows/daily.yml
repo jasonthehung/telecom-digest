@@ -19,6 +19,13 @@ on:
         default: false
         type: boolean
 
+  # 保持 repository 活動以確保排程穩定
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/daily.yml'
+
 jobs:
   daily-digest:
     runs-on: ubuntu-latest

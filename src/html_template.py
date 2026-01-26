@@ -209,58 +209,15 @@ def generate_daily_email_html(result: AnalysisResult, date_str: str) -> str:
     """
     news_items = result.news_items
 
-    # 分類新聞
-    ericsson_news = [n for n in news_items if n.category == 'ericsson']
-    taiwan_news = [n for n in news_items if n.category == 'taiwan']
-    ran_news = [n for n in news_items if n.category in ['ran', 'core']]
-    tech_news = [n for n in news_items if n.category == 'tech']
-    business_news = [n for n in news_items if n.category == 'business']
-    other_news = [n for n in news_items if n.category == 'other']
+    # 直接生成所有新聞卡片（不分類）
+    all_cards_html = "\n".join([generate_news_card(n) for n in news_items])
 
-    # 焦點新聞（priority >= 80）
-    featured_news = [n for n in news_items if n.priority >= 80 and n not in ericsson_news]
-
-    # 生成各區塊
-    sections_html = ""
-
-    # Ericsson 專區
-    if ericsson_news:
-        sections_html += generate_section("Ericsson 動態", "🎯", ericsson_news)
-
-    # 台灣市場
-    if taiwan_news:
-        sections_html += generate_section("台灣市場", "🇹🇼", taiwan_news)
-
-    # 焦點新聞
-    if featured_news:
-        sections_html += generate_section("焦點新聞", "🔥", featured_news[:5], is_featured=True)
-
-    # RAN & Core 技術
-    if ran_news:
-        sections_html += generate_section("RAN & Core 技術", "📡", ran_news)
-
-    # 新技術與創新
-    if tech_news:
-        sections_html += generate_section("新技術與創新", "🚀", tech_news)
-
-    # 商業動態
-    if business_news:
-        sections_html += generate_section("商業動態", "💼", business_news)
-
-    # 產業趨勢
-    trends_html = ""
-    if result.daily_trends:
-        trends_html = f'''
-        <div class="section">
-            <div class="trends-box">
-                <strong>📊 今日趨勢觀察</strong>
-                <p style="margin: 10px 0 0 0; line-height: 1.6;">{result.daily_trends}</p>
-            </div>
-        </div>
-        '''
-
-    # 其他新聞
-    other_html = generate_other_news_list(other_news) if other_news else ""
+    sections_html = f'''
+    <div class="section">
+        <div class="section-title">📰 今日新聞 ({len(news_items)} 則)</div>
+        {all_cards_html}
+    </div>
+    '''
 
     # 統計資訊
     stats_html = generate_stats_section(result.statistics)
@@ -493,10 +450,6 @@ def generate_daily_email_html(result: AnalysisResult, date_str: str) -> str:
         </div>
 
         {sections_html}
-
-        {trends_html}
-
-        {other_html}
 
         {stats_html}
 

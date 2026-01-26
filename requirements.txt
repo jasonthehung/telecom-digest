@@ -3,6 +3,9 @@
 # RSS 解析
 feedparser>=6.0.10
 
+# 日期解析
+python-dateutil>=2.8.0
+
 # HTTP 請求
 requests>=2.31.0
 

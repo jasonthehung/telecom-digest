@@ -95,19 +95,9 @@ def run_daily_digest(config: AppConfig, test_mode: bool = False) -> bool:
 
         logger.info(f"Fetched {len(news_items)} news items")
 
-        # Step 2: Gemini 分析
-        logger.info("Step 2: Analyzing with Gemini...")
-        news_content = format_news_for_gemini(news_items)
-
-        analyzer = GeminiAnalyzer(config.gemini_api_key)
-        result = analyzer.analyze_daily(news_content)
-
-        if not result.success:
-            logger.warning(f"Gemini analysis failed: {result.error_message}")
-            logger.info("Using fallback analysis...")
-            result = create_fallback_analysis(news_items)
-            errors.append(f"Gemini API: {result.error_message}")
-
+        # Step 2: 直接使用 fallback 分析（不依賴 Gemini API）
+        logger.info("Step 2: Creating news summary...")
+        result = create_fallback_analysis(news_items)
         logger.info(f"Analysis complete: {len(result.news_items)} items processed")
 
         # Step 3: 生成 HTML

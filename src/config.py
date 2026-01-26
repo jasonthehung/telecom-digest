@@ -1,14 +1,16 @@
 """
 電信產業自動摘要系統 - 設定檔
 """
+
 import os
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Dict, List
 
 
 @dataclass
 class RSSSource:
     """RSS 來源設定"""
+
     name: str
     url: str
     language: str = "en"
@@ -16,30 +18,242 @@ class RSSSource:
 
 # RSS 新聞來源
 RSS_FEEDS: List[RSSSource] = [
+    # 英文來源
     RSSSource("Light Reading", "https://www.lightreading.com/rss.xml"),
-    RSSSource("RCR Wireless News", "https://feeds.feedburner.com/rcrwireless/sLmV"),
+    RSSSource("RCR Wireless News", "https://www.rcrwireless.com/feed"),
     RSSSource("Fierce Wireless", "https://www.fiercewireless.com/rss/xml"),
+    RSSSource("Fierce Telecom", "https://www.fiercetelecom.com/rss/xml"),
+    RSSSource("Total Telecom", "https://www.totaltele.com/feed"),
+    # 中文來源
     RSSSource("TechNews 科技新報", "https://technews.tw/feed/", "zh"),
 ]
+
+TELECOM_REQUIRED_KEYWORDS = [
+    # 核心電信詞彙
+    "telecom",
+    "telecommunication",
+    "電信",
+    "通訊",
+    # 通訊世代與標準
+    "1g",
+    "2g",
+    "3g",
+    "4g",
+    "5g",
+    "5gc",
+    "6g",
+    "nr",
+    "lte",
+    "umts",
+    "gsm",
+    "cdma",
+    "cdma2000",
+    "td-lte",
+    "wcdma",
+    # 通訊網路與架構
+    "ran",
+    "open ran",
+    "o-ran",
+    "c-ran",
+    "vran",
+    "radio access network",
+    "core network",
+    "5g core",
+    "epc",
+    "sa",
+    "nsa",
+    "network slicing",
+    "mec",
+    "edge computing",
+    "sdn",
+    "nfv",
+    "cloud rAN",
+    # 行動通訊與頻譜
+    "mobile network",
+    "cellular",
+    "wireless",
+    "spectrum",
+    "頻譜",
+    "frequency",
+    "band",
+    "sub-6",
+    "mmwave",
+    "millimeter wave",
+    "carrier aggregation",
+    "uRLLC",
+    "eMBB",
+    "mMTC",
+    # 基礎設施
+    "base station",
+    "基站",
+    "基地台",
+    "remote radio head",
+    "rrh",
+    "bbu",
+    "antenna",
+    "small cell",
+    "femtocell",
+    "distributed antenna system",
+    "das",
+    "backhaul",
+    "fronthaul",
+    "fiber",
+    "光纖",
+    "ftth",
+    # 網路技術與協議
+    "iot",
+    "internet of things",
+    "nb-iot",
+    "ciot",
+    "voip",
+    "vpn",
+    "vlan",
+    "wan",
+    "lan",
+    "tcp/ip",
+    "sip",
+    "h323",
+    "802.11",
+    "wifi",
+    "wifi6",
+    "wifi7",
+    "qos",
+    "latency",
+    "throughput",
+    "modulation",
+    "qam",
+    "massive mimo",
+    "beamforming",
+    # 運營商與分類
+    "carrier",
+    "operator",
+    "mno",
+    "mvno",
+    "isp",
+    "wisp",
+    "verizon",
+    "at&t",
+    "t-mobile",
+    "vodafone",
+    "deutsche telekom",
+    "china telecom",
+    "china mobile",
+    "china unicom",
+    "中華電信",
+    "台灣大哥大",
+    "遠傳電信",
+    "亞太電信",
+    # 設備製造商 / 供應商
+    "ericsson",
+    "nokia",
+    "huawei",
+    "zte",
+    "samsung network",
+    "qualcomm",
+    "intel",
+    "mediatek",
+    # 衛星與高空平台
+    "satellite",
+    "衛星通訊",
+    "ntn",
+    "leo",
+    "geo",
+    "meo",
+    "high altitude platform",
+    "haps",
+    # 專網與企業網路
+    "private network",
+    "專網",
+    "enterprise network",
+    "industrial iot",
+    # 網路安全與管理
+    "firewall",
+    "security",
+    "資安",
+    "ddos",
+    "encryption",
+    "authentication",
+    # 其他相關術語
+    "backhaul",
+    "uplink",
+    "downlink",
+    "handover",
+    "roaming",
+    "漫遊",
+    "fixed wireless",
+    "fwa",
+    "bts",
+    "bsc",
+    "bss",
+    "cn",
+    "cu",
+    "du",
+    "smf",
+    "ausf",
+    "amf",
+    "apn",
+    # 新興技術與趨勢
+    "urlcc",
+    "network automation",
+    "ai in telecom",
+    "digital twin telecom",
+    "semantic communication",
+    "b5g",
+    "beyond 5g",
+    "future network",
+    # 協議與標準組織
+    "3gpp",
+    "itu",
+    "etsi",
+    "ieee",
+    "ims",
+]
+
 
 # 優先級關鍵字設定
 PRIORITY_KEYWORDS: Dict[str, Dict] = {
     "highest": {
         "ericsson": ["ericsson", "愛立信"],
-        "taiwan": ["taiwan", "台灣", "cht", "中華電", "台灣大", "遠傳", "ncc"],
-        "major_events": ["bankruptcy", "破產", "ban", "禁令", "acquisition", "merger", "併購"],
+        "taiwan": [
+            "taiwan telecom",
+            "台灣電信",
+            "cht",
+            "中華電",
+            "台灣大",
+            "遠傳",
+            "ncc",
+        ],
+        "major_events": ["bankruptcy", "破產", "ban", "禁令"],
     },
     "high": {
-        "ran": ["open ran", "vran", "c-ran", "o-ran", "radio access network", "massive mimo"],
+        "ran": [
+            "open ran",
+            "vran",
+            "c-ran",
+            "o-ran",
+            "radio access network",
+            "massive mimo",
+        ],
         "core": ["5g core", "core network", "epc", "核心網", "5gc", "nef", "upf"],
-        "new_tech": ["6g", "ai-ran", "network slicing", "mec", "redcap", "ntn", "衛星通訊",
-                     "private 5g", "edge computing", "digital twin"],
-        "financial": ["earnings", "revenue", "財報", "q1", "q2", "q3", "q4", "profit",
-                      "loss", "營收", "quarterly"],
-        "partnership": ["partnership", "collaboration", "合作", "contract", "deal",
-                        "agreement", "alliance"],
-        "ma": ["acquisition", "merger", "m&a", "併購", "收購", "takeover"],
-    }
+        "new_tech": [
+            "6g",
+            "ai-ran",
+            "network slicing",
+            "mec",
+            "redcap",
+            "ntn",
+            "衛星通訊",
+            "private 5g",
+            "edge computing",
+            "digital twin",
+        ],
+        "partnership": [
+            "telecom partnership",
+            "network collaboration",
+            "spectrum deal",
+        ],
+        "ma": ["telecom acquisition", "carrier merger", "network m&a"],
+    },
 }
 
 # 類別對應
@@ -49,7 +263,6 @@ CATEGORY_MAPPING = {
     "ran": "ran",
     "core": "core",
     "new_tech": "tech",
-    "financial": "business",
     "partnership": "business",
     "ma": "business",
     "major_events": "business",
@@ -83,10 +296,11 @@ NEWS_LOOKBACK_HOURS = 24
 # User-Agent 設定（for DigiTimes）
 HTTP_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/rss+xml, application/xml, text/xml, */*",
     "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
 }
+
 
 # 環境變數
 def get_env(key: str, default: str = None, required: bool = False) -> str:
@@ -100,12 +314,25 @@ def get_env(key: str, default: str = None, required: bool = False) -> str:
 @dataclass
 class AppConfig:
     """應用程式設定"""
-    gemini_api_key: str = field(default_factory=lambda: get_env("GEMINI_API_KEY", required=True))
-    gmail_user: str = field(default_factory=lambda: get_env("GMAIL_USER", required=True))
-    gmail_app_password: str = field(default_factory=lambda: get_env("GMAIL_APP_PASSWORD", required=True))
-    recipient_email: str = field(default_factory=lambda: get_env("RECIPIENT_EMAIL", required=True))
-    debug_mode: bool = field(default_factory=lambda: get_env("DEBUG_MODE", "false").lower() == "true")
-    test_mode: bool = field(default_factory=lambda: get_env("TEST_MODE", "false").lower() == "true")
+
+    gemini_api_key: str = field(
+        default_factory=lambda: get_env("GEMINI_API_KEY", required=True)
+    )
+    gmail_user: str = field(
+        default_factory=lambda: get_env("GMAIL_USER", required=True)
+    )
+    gmail_app_password: str = field(
+        default_factory=lambda: get_env("GMAIL_APP_PASSWORD", required=True)
+    )
+    recipient_email: str = field(
+        default_factory=lambda: get_env("RECIPIENT_EMAIL", required=True)
+    )
+    debug_mode: bool = field(
+        default_factory=lambda: get_env("DEBUG_MODE", "false").lower() == "true"
+    )
+    test_mode: bool = field(
+        default_factory=lambda: get_env("TEST_MODE", "false").lower() == "true"
+    )
 
 
 # Gemini 分析提示詞

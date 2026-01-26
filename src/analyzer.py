@@ -215,45 +215,59 @@ class GeminiAnalyzer:
 
 def create_fallback_analysis(news_items: List[Dict]) -> AnalysisResult:
     """
-    建立備用分析結果（當 Gemini API 失敗時使用）
+    建立分析結果（直接處理新聞，不依賴 Gemini API）
 
     Args:
         news_items: 原始新聞列表
 
     Returns:
-        AnalysisResult: 備用分析結果
+        AnalysisResult: 分析結果
     """
     analyzed_items = []
 
     for item in news_items:
+        source = item.get('source', '')
+
+        # 根據來源設定 badge
+        badges = []
+        if 'Light Reading' in source:
+            badges = ['Tech']
+        elif 'TechNews' in source or '科技新報' in source:
+            badges = ['Tech']
+        elif 'RCR Wireless' in source:
+            badges = ['Tech']
+        elif 'Mobile World Live' in source:
+            badges = ['Tech']
+        elif 'DigiTimes' in source or '電子時報' in source:
+            badges = ['Business']
+
         analyzed_items.append(AnalyzedNews(
             title_zh=item.get('title', ''),
             title_en=item.get('title', ''),
-            summary_zh=item.get('description', '')[:150],
+            summary_zh=item.get('description', '')[:300],  # 增加摘要長度
             key_quote='',
-            source=item.get('source', ''),
+            source=source,
             url=item.get('link', ''),
             tags=[],
-            badges=[],
-            category=item.get('preliminary_category', 'other'),
+            badges=badges,
+            category='news',  # 統一類別
             priority=item.get('preliminary_priority', 50),
         ))
 
     # 計算統計
     stats = {
         "total": len(analyzed_items),
-        "by_category": {},
+        "by_category": {"news": len(analyzed_items)},
         "by_source": {},
     }
 
     for item in analyzed_items:
-        stats["by_category"][item.category] = stats["by_category"].get(item.category, 0) + 1
         stats["by_source"][item.source] = stats["by_source"].get(item.source, 0) + 1
 
     return AnalysisResult(
         success=True,
         news_items=analyzed_items,
-        daily_trends="（Gemini API 暫時無法使用，此為自動產生的備用內容）",
+        daily_trends="",
         statistics=stats,
     )
 
