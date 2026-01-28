@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"[System.IO.File]::ReadAllBytes\\(''.github/workflows/daily.yml''\\) | ForEach-Object { ''{0:X2}'' -f $_}\")",
+      "Bash(powershell -Command:*)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix workflow: convert to pure ASCII to fix schedule trigger\n\nReplace Chinese comments with English and remove emoji characters\nto ensure GitHub Actions can properly parse the schedule trigger.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}
