@@ -1,25 +1,25 @@
 name: Daily Telecom News Digest
 
 on:
-  # 每日台北時間 08:00 執行 (UTC 00:00)
+  # Run daily at 08:00 Taipei time (UTC 00:00)
   schedule:
     - cron: '0 0 * * *'
 
-  # 手動觸發
+  # Manual trigger
   workflow_dispatch:
     inputs:
       test_mode:
-        description: '測試模式（不發送郵件）'
+        description: 'Test mode (no email sent)'
         required: false
         default: false
         type: boolean
       debug:
-        description: '除錯模式'
+        description: 'Debug mode'
         required: false
         default: false
         type: boolean
 
-  # 保持 repository 活動以確保排程穩定
+  # Keep repository active to ensure schedule stability
   push:
     branches:
       - main
@@ -58,7 +58,7 @@ jobs:
         run: |
           cd src
 
-          # 設定參數
+          # Set parameters
           # ARGS="--daily"
           ARGS=""
 
@@ -84,7 +84,7 @@ jobs:
         if: always()
         run: |
           if [ "${{ job.status }}" = "success" ]; then
-            echo "✅ Daily digest completed successfully"
+            echo "Daily digest completed successfully"
           else
-            echo "❌ Daily digest failed"
+            echo "Daily digest failed"
           fi
