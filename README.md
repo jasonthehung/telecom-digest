@@ -17,24 +17,24 @@ Automatically fetch telecom industry news RSS feeds, use Gemini AI for intellige
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Processing Flow                         │
+│                      Processing Flow                        │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Step 1: Fetch RSS Feeds                                     │
-│     └── Aggregate news from 6 sources                        │
-│              ↓                                               │
-│  Step 2: AI Title Ranking (Lightweight)                      │
-│     ├── 2a. Send TITLES ONLY to Gemini                       │
-│     ├── 2b. AI returns top 15 ranked indices                 │
-│     └── 2c. Filter news based on AI selection                │
-│              ↓                                               │
-│  Step 3: Prepare Display Format                              │
-│     └── Generate AnalyzedNews objects                        │
-│              ↓                                               │
-│  Step 4: Generate HTML Email                                 │
-│              ↓                                               │
-│  Step 5: Send Email                                          │
-│                                                              │
+│                                                             │
+│  Step 1: Fetch RSS Feeds                                    │
+│     └── Aggregate news from 6 sources                       │
+│              ↓                                              │
+│  Step 2: AI Title Ranking (Lightweight)                     │
+│     ├── 2a. Send TITLES ONLY to Gemini                      │
+│     ├── 2b. AI returns top 15 ranked indices                │
+│     └── 2c. Filter news based on AI selection               │
+│              ↓                                              │
+│  Step 3: Prepare Display Format                             │
+│     └── Generate AnalyzedNews objects                       │
+│              ↓                                              │
+│  Step 4: Generate HTML Email                                │
+│              ↓                                              │
+│  Step 5: Send Email                                         │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
