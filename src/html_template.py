@@ -86,10 +86,6 @@ def generate_news_card(news: AnalyzedNews, is_featured: bool = False) -> str:
 
     return f'''
     <div class="news-card" style="border-left-color: {border_color};">
-        <div class="badges">
-            {badges_html}
-        </div>
-
         <h2>{news.title_zh}</h2>
 
         <div class="summary">
@@ -273,12 +269,13 @@ def generate_daily_email_html(result: AnalysisResult, date_str: str) -> str:
         }}
 
         .news-card {{
-            background: white;
+            background: #f8fafc;
             margin: 15px 0;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             border-left: 4px solid #667eea;
+            border: 1px solid #e2e8f0;
         }}
 
         .badges {{
@@ -450,8 +447,6 @@ def generate_daily_email_html(result: AnalysisResult, date_str: str) -> str:
         </div>
 
         {sections_html}
-
-        {stats_html}
 
         <!-- Footer -->
         <div class="email-footer">
