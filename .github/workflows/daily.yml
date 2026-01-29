@@ -2,7 +2,7 @@ name: Daily Telecom News Digest
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "0 0 * * *"
     
   workflow_dispatch:
     inputs:
@@ -27,6 +27,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        
+      - name: Show runner time (cron diagnostics)
+        run: |
+          echo "=== Time diagnostics ==="
+          echo "date (UTC default):"
+          date
+
+          echo ""
+          echo "date (Asia/Taipei):"
+          TZ=Asia/Taipei date
+
+          echo ""
+          echo "System timezone:"
+          timedatectl || true
+
+          echo ""
+          echo "GitHub event:"
+          echo "event_name=${{ github.event_name }}"
+          echo "schedule=${{ github.event.schedule }}"
 
       - name: Set up Python
         uses: actions/setup-python@v5
