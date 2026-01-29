@@ -8,13 +8,15 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from config import (
     GEMINI_MODEL,
     GEMINI_MAX_RETRIES,
     GEMINI_RETRY_DELAY,
     GEMINI_PROMPT_TEMPLATE,
+    GEMINI_RANKING_PROMPT,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,9 +73,62 @@ class GeminiAnalyzer:
         Args:
             api_key: Gemini API 金鑰
         """
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(GEMINI_MODEL)
+        self.client = genai.Client(api_key=api_key)
+        self.model_name = GEMINI_MODEL
         logger.info(f"Initialized Gemini analyzer with model: {GEMINI_MODEL}")
+
+    def rank_news_by_titles(self, titles_text: str, total_count: int) -> List[int]:
+        """
+        根據標題排序新聞（輕量化方案，減少 token 用量）
+
+        Args:
+            titles_text: 格式化的標題列表
+            total_count: 新聞總數
+
+        Returns:
+            List[int]: 選中的新聞索引列表（按重要性排序）
+        """
+        prompt = GEMINI_RANKING_PROMPT.format(titles=titles_text)
+
+        for attempt in range(GEMINI_MAX_RETRIES):
+            try:
+                logger.info(f"Calling Gemini API for ranking (attempt {attempt + 1}/{GEMINI_MAX_RETRIES})")
+
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.2,
+                        max_output_tokens=512,
+                    )
+                )
+
+                if not response.text:
+                    raise ValueError("Empty response from Gemini")
+
+                # 提取 JSON
+                result_json = self._extract_json(response.text)
+                if not result_json:
+                    raise ValueError("Could not extract JSON from response")
+
+                selected = result_json.get('selected', [])
+
+                # 驗證索引範圍
+                valid_indices = [i for i in selected if isinstance(i, int) and 0 <= i < total_count]
+
+                logger.info(f"Gemini selected {len(valid_indices)} news items")
+                return valid_indices[:15]
+
+            except Exception as e:
+                error_msg = f"Gemini ranking error (attempt {attempt + 1}): {e}"
+                logger.error(error_msg)
+
+                if attempt < GEMINI_MAX_RETRIES - 1:
+                    logger.info(f"Retrying in {GEMINI_RETRY_DELAY} seconds...")
+                    time.sleep(GEMINI_RETRY_DELAY)
+
+        logger.warning("Gemini ranking failed after all retries")
+        return []
 
     def _extract_json(self, text: str) -> Optional[Dict]:
         """
@@ -145,9 +200,10 @@ class GeminiAnalyzer:
             try:
                 logger.info(f"Calling Gemini API (attempt {attempt + 1}/{GEMINI_MAX_RETRIES})")
 
-                response = self.model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
                         temperature=0.3,
                         max_output_tokens=8192,
                     )

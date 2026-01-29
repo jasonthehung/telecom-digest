@@ -382,6 +382,22 @@ def format_news_for_gemini(news_items: List[Dict]) -> str:
     return "\n".join(formatted)
 
 
+def format_titles_for_ranking(news_items: List[Dict]) -> str:
+    """
+    只格式化標題給 AI 排序用（輕量化方案）
+
+    Args:
+        news_items: 新聞列表
+
+    Returns:
+        str: 格式化的標題列表
+    """
+    lines = []
+    for i, news in enumerate(news_items):
+        lines.append(f"[{i}] {news['title']}")
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     # 測試用
     logging.basicConfig(level=logging.INFO)

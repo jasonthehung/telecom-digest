@@ -8,7 +8,10 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix workflow: convert to pure ASCII to fix schedule trigger\n\nReplace Chinese comments with English and remove emoji characters\nto ensure GitHub Actions can properly parse the schedule trigger.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push:*)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(pip install:*)"
     ]
   }
 }

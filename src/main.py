@@ -17,7 +17,7 @@ from config import (
     NEWS_LOOKBACK_HOURS,
     EMAIL_SUBJECT_DAILY,
 )
-from rss_fetcher import RSSFetcher, format_news_for_gemini
+from rss_fetcher import RSSFetcher, format_news_for_gemini, format_titles_for_ranking
 from analyzer import GeminiAnalyzer, create_fallback_analysis
 from email_sender import create_email_sender
 from html_template import (
@@ -95,13 +95,31 @@ def run_daily_digest(config: AppConfig, test_mode: bool = False) -> bool:
 
         logger.info(f"Fetched {len(news_items)} news items")
 
-        # Step 2: 直接使用 fallback 分析（不依賴 Gemini API）
-        logger.info("Step 2: Creating news summary...")
-        result = create_fallback_analysis(news_items)
-        logger.info(f"Analysis complete: {len(result.news_items)} items processed")
+        # Step 2: 使用 Gemini AI 篩選最重要的新聞（輕量化方案）
+        logger.info("Step 2: Ranking news with Gemini AI...")
 
-        # Step 3: 生成 HTML
-        logger.info("Step 3: Generating HTML email...")
+        # 2a. 只傳標題給 Gemini
+        titles_text = format_titles_for_ranking(news_items)
+        analyzer = GeminiAnalyzer(config.gemini_api_key)
+
+        # 2b. AI 排序
+        selected_indices = analyzer.rank_news_by_titles(titles_text, len(news_items))
+
+        if not selected_indices:
+            logger.warning("Gemini ranking failed, using all items")
+            selected_items = news_items[:15]
+        else:
+            # 2c. 根據 AI 選擇過濾並排序
+            selected_items = [news_items[i] for i in selected_indices]
+            logger.info(f"AI selected {len(selected_items)} important news")
+
+        # Step 3: 用 fallback 方式準備 AnalyzedNews
+        logger.info("Step 3: Preparing news for display...")
+        result = create_fallback_analysis(selected_items)
+        logger.info(f"Prepared {len(result.news_items)} items for display")
+
+        # Step 4: 生成 HTML
+        logger.info("Step 4: Generating HTML email...")
         html_content = generate_daily_email_html(result, date_str)
 
         # 測試模式：儲存 HTML 到檔案
@@ -113,8 +131,8 @@ def run_daily_digest(config: AppConfig, test_mode: bool = False) -> bool:
             logger.info(f"Test mode: HTML saved to {output_file}")
             return True
 
-        # Step 4: 發送 Email
-        logger.info("Step 4: Sending email...")
+        # Step 5: 發送 Email
+        logger.info("Step 5: Sending email...")
         sender = create_email_sender(config.gmail_user, config.gmail_app_password)
 
         subject = EMAIL_SUBJECT_DAILY.format(date=date_str)
@@ -204,39 +222,44 @@ def test_rss_only():
 
 
 def test_gemini_only(api_key: str):
-    """僅測試 Gemini 分析"""
-    logger.info("Testing Gemini analysis only...")
+    """僅測試 Gemini 排序（輕量化方案）"""
+    logger.info("Testing Gemini ranking only...")
 
     # 先抓取新聞
     fetcher = RSSFetcher(lookback_hours=48)
-    news_items, _ = fetcher.fetch_and_prioritize(max_items=5)
+    news_items, _ = fetcher.fetch_and_prioritize(max_items=30)
 
     if not news_items:
         print("No news items to analyze")
         return
 
-    # 分析
-    news_content = format_news_for_gemini(news_items)
-    analyzer = GeminiAnalyzer(api_key)
-    result = analyzer.analyze_daily(news_content)
-
     print(f"\n{'=' * 60}")
-    print(f"Analysis Success: {result.success}")
+    print(f"Total news items: {len(news_items)}")
     print(f"{'=' * 60}\n")
 
-    if result.success:
-        print(f"Analyzed {len(result.news_items)} items\n")
+    # 使用輕量化排序
+    titles_text = format_titles_for_ranking(news_items)
+    print("Titles sent to Gemini:")
+    print(titles_text[:500] + "..." if len(titles_text) > 500 else titles_text)
+    print()
 
-        for item in result.news_items[:3]:
-            print(f"📰 {item.title_zh}")
-            print(f"   Category: {item.category}")
-            print(f"   Priority: {item.priority}")
-            print(f"   Badges: {item.badges}")
+    analyzer = GeminiAnalyzer(api_key)
+    selected_indices = analyzer.rank_news_by_titles(titles_text, len(news_items))
+
+    print(f"\n{'=' * 60}")
+    print(f"Ranking Success: {len(selected_indices) > 0}")
+    print(f"Selected indices: {selected_indices}")
+    print(f"{'=' * 60}\n")
+
+    if selected_indices:
+        print(f"AI selected {len(selected_indices)} important news:\n")
+        for rank, idx in enumerate(selected_indices[:10], 1):
+            news = news_items[idx]
+            print(f"[{rank}] {news['title'][:70]}...")
+            print(f"    Source: {news['source']}")
             print()
-
-        print(f"\n📊 Daily Trends:\n{result.daily_trends}")
     else:
-        print(f"Error: {result.error_message}")
+        print("Ranking failed, would use fallback")
 
 
 def main():

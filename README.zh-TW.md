@@ -2,34 +2,71 @@
 
 [English](README.md) | [繁體中文](README.zh-TW.md)
 
-自動抓取電信產業新聞 RSS feeds，使用 Gemini AI 分析總結，以精美的 HTML 格式寄送郵件。
+自動抓取電信產業新聞 RSS feeds，使用 Gemini AI 智慧排序篩選，以精美的 HTML 格式寄送郵件摘要。
 
 ## ✨ 功能特色
 
 - **🔄 自動化執行**：透過 GitHub Actions 每日自動執行
-- **📰 多來源整合**：整合 Light Reading、RCR Wireless News、Fierce Wireless、TechNews 科技新報等主流電信產業媒體
-- **🤖 AI 智慧分析**：使用 Gemini 1.5 Flash 進行新聞摘要與分類
-- **🎯 優先級排序**：根據 Ericsson、台灣市場、技術關鍵字自動排序
+- **📰 多來源整合**：整合 Light Reading、RCR Wireless News、Fierce Wireless、Fierce Telecom、Total Telecom、TechNews 科技新報等主流電信產業媒體
+- **🤖 輕量化 AI 排序**：使用 Gemini 2.0 Flash 進行標題排序（節省約 86% token 用量）
+- **🎯 智慧優先排序**：根據 Ericsson、台灣市場、技術關鍵字自動排序
 - **📧 精美郵件**：卡片式 HTML 設計，相容主流郵件客戶端
 - **⚠️ 錯誤通知**：系統異常時自動發送通知郵件
+
+## 🏗️ 系統架構
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        處理流程                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Step 1: 抓取 RSS Feeds                                      │
+│     └── 從 6 個來源彙整新聞                                   │
+│              ↓                                               │
+│  Step 2: AI 標題排序（輕量化）                                │
+│     ├── 2a. 只傳標題給 Gemini                                │
+│     ├── 2b. AI 回傳 top 15 排序索引                          │
+│     └── 2c. 根據 AI 選擇篩選新聞                             │
+│              ↓                                               │
+│  Step 3: 準備顯示格式                                        │
+│     └── 生成 AnalyzedNews 物件                               │
+│              ↓                                               │
+│  Step 4: 生成 HTML 郵件                                      │
+│              ↓                                               │
+│  Step 5: 發送郵件                                            │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 💡 Token 優化
+
+系統採用輕量化 AI 方案，大幅降低 API 成本：
+
+| 項目 | 傳統方案 | 輕量化方案 | 節省 |
+|------|----------|------------|------|
+| 輸入 | ~50 篇 × 500 字 | ~50 標題 × 80 字 | **84%** |
+| 輸出 | ~15 摘要 × 300 字 | ~50 索引 ≈ 100 字 | **98%** |
+| **總計** | ~30,000 tokens | ~4,100 tokens | **~86%** |
 
 ## 📋 新聞來源
 
 | 來源 | URL | 語言 |
 |------|-----|------|
 | Light Reading | https://www.lightreading.com/rss.xml | 英文 |
-| RCR Wireless News | https://feeds.feedburner.com/rcrwireless/sLmV | 英文 |
+| RCR Wireless News | https://www.rcrwireless.com/feed | 英文 |
 | Fierce Wireless | https://www.fiercewireless.com/rss/xml | 英文 |
+| Fierce Telecom | https://www.fiercetelecom.com/rss/xml | 英文 |
+| Total Telecom | https://www.totaltele.com/feed | 英文 |
 | TechNews 科技新報 | https://technews.tw/feed/ | 中文 |
 
 ## 🎯 優先級邏輯
 
-### 最高優先級（必定出現）
+### 最高優先級
 - **Ericsson 相關**：Ericsson、愛立信
 - **台灣市場**：Taiwan、台灣、CHT、中華電、台灣大、遠傳、NCC
 - **重大事件**：併購、破產、禁令
 
-### 高優先級（核心關注）
+### 高優先級
 - **RAN 技術**：Open RAN、vRAN、C-RAN、O-RAN
 - **Core Network**：5G Core、Core Network、EPC
 - **新技術**：6G、AI-RAN、Network Slicing、MEC、RedCap、NTN
@@ -65,7 +102,7 @@
 3. 前往「安全性」>「兩步驟驗證」>「應用程式密碼」
 4. 選擇「郵件」和「其他（自訂名稱）」
 5. 輸入名稱（如：Telecom Digest）
-6. 複製 16 位元密碼（不含空格）
+6. 複製 16 位元密碼
 
 ### 4. 啟用 GitHub Actions
 
@@ -119,10 +156,10 @@ cd src
 # 測試 RSS 抓取
 python main.py --test-rss
 
-# 測試 Gemini 分析
+# 測試 Gemini AI 排序
 python main.py --test-gemini
 
-# 測試完整流程（不發送郵件，輸出 HTML 檔案）
+# 測試完整流程（輸出 HTML，不發送郵件）
 python main.py --test
 
 # 執行每日摘要（會發送郵件）
@@ -146,10 +183,12 @@ telecom-digest/
 │   ├── analyzer.py           # Gemini 分析模組
 │   ├── email_sender.py       # Email 發送模組
 │   └── html_template.py      # HTML 模板生成
+├── output/                   # 測試輸出目錄
 ├── requirements.txt          # Python 依賴
 ├── .env.example             # 環境變數範例
 ├── .gitignore               # Git 忽略檔案
-└── README.md                # 說明文件
+├── README.md                # 英文說明文件
+└── README.zh-TW.md          # 中文說明文件
 ```
 
 ## 📧 郵件內容
@@ -161,19 +200,15 @@ telecom-digest/
 - 📡 RAN & Core 技術
 - 🚀 新技術與創新
 - 💼 商業動態
-- 📊 今日趨勢觀察
-- 📌 其他值得關注
 - 📊 今日統計
 
 ## ⚠️ 錯誤處理
-
-系統會自動處理以下錯誤情況：
 
 | 錯誤類型 | 處理方式 |
 |----------|----------|
 | RSS 單一來源失敗 | 記錄並繼續處理其他來源 |
 | RSS 全部失敗 | 發送錯誤通知郵件 |
-| Gemini API 失敗 | 重試最多 3 次，失敗則使用備用分析 |
+| Gemini API 失敗 | 使用關鍵字排序作為備援 |
 | Email 發送失敗 | 記錄到 GitHub Actions logs |
 
 ## 🔧 自訂設定
@@ -204,6 +239,10 @@ PRIORITY_KEYWORDS = {
 }
 ```
 
+### 修改 AI 排序提示詞
+
+編輯 `src/config.py` 中的 `GEMINI_RANKING_PROMPT` 來自訂排序規則。
+
 ### 修改執行時間
 
 編輯 `.github/workflows/daily.yml` 中的 cron 表達式：
@@ -215,10 +254,10 @@ schedule:
 
 ## 📝 注意事項
 
-1. **Gemini API 額度**：免費版每分鐘 15 次請求
-2. **Gmail 安全性**：必須使用應用程式密碼
-3. **時區轉換**：GitHub Actions 使用 UTC 時區
-4. **新聞去重**：使用 URL hash 避免重複
+1. **Gemini API 額度**：免費版有速率限制，輕量化方案可最大化使用效益
+2. **Gmail 安全性**：必須使用應用程式密碼（非一般密碼）
+3. **時區轉換**：GitHub Actions 使用 UTC 時區，請相應調整 cron
+4. **新聞去重**：使用 URL hash 避免重複新聞
 
 ## 📄 授權
 

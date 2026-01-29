@@ -335,6 +335,28 @@ class AppConfig:
     )
 
 
+# Gemini 輕量化排序 prompt（只根據標題排序）
+GEMINI_RANKING_PROMPT = """你是電信產業分析師。根據以下新聞標題，選出最重要的 15 則新聞並排序。
+
+【優先級規則】
+1. Ericsson 相關 → 最高優先級
+2. Telecom/電信產業相關 → 高優先級
+3. 5G, Open RAN, Core Network 等技術新聞 → 中高優先級
+4. 其他產業新聞 → 一般優先級
+
+【新聞標題列表】
+{titles}
+
+【輸出格式】
+只回傳 JSON，包含選中的新聞索引（從 0 開始），按重要性排序：
+{{"selected": [3, 0, 7, 12, ...]}}
+
+注意：
+- 最多選 15 則
+- 若總數不足 15 則，全部選取
+- 只回傳 JSON，不要其他文字
+"""
+
 # Gemini 分析提示詞
 GEMINI_PROMPT_TEMPLATE = """你是專業的電信產業分析師。分析以下新聞並產生 JSON 格式摘要。
 
